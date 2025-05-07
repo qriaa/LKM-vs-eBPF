@@ -4,11 +4,22 @@
 #include <linux/netfilter_ipv4.h>
 #include <linux/ip.h>
 #include <linux/tcp.h>
+#include <linux/inet.h>
 
 unsigned int tcp_logger(void *priv,
                         struct sk_buff *skb,
                         const struct nf_hook_state *state) {
-    pr_info("There is a packet!\n");
+    struct iphdr *ip_header;
+
+    if (!skb) {
+        return NF_ACCEPT;
+    }
+
+    ip_header = ip_hdr(skb);
+
+    __be32 source_ip = ip_header->saddr;
+
+    pr_info("Received IPv4 packet from %pI4\n", &source_ip);
     return NF_ACCEPT;
 }
 
