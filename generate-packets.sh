@@ -1,15 +1,9 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
-pgset() {
-    local result
-    echo $1 > $PGDEV
-    result=`cat $PGDEV | grep 'Result: OK:'`
-    if [ "$result" = "" ]; then
-        cat $PGDEV | grep Result:
-    fi
-}
+source ./pktgen-functions.sh
 
-PGDEV=/proc/net/pktgen/kpktgend_0
+PGDEV=kpktgend_0
 
-pgset "rem_device_all"
-pgset "add_device enp0s3"
+pg_set $PGDEV "rem_device_all"
+pg_set $PGDEV "add_device enp0s3"
+pg_ctrl "start"
