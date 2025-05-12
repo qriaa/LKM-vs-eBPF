@@ -8,6 +8,12 @@
 
 unsigned int tcp_logger(void *priv,
                         struct sk_buff *skb,
+                        const struct nf_hook_state *state);
+
+static struct nf_hook_ops tcp_logger_hook;
+
+unsigned int tcp_logger(void *priv,
+                        struct sk_buff *skb,
                         const struct nf_hook_state *state) {
     struct iphdr *ip_header;
 
@@ -17,13 +23,12 @@ unsigned int tcp_logger(void *priv,
 
     ip_header = ip_hdr(skb);
 
-    __be32 source_ip = ip_header->saddr;
+    __be32 src_ip = ip_header->saddr;
+    __be32 dest_ip = ip_header->daddr;
 
-    pr_info("Received IPv4 packet from %pI4\n", &source_ip);
+    pr_info("Packet: %pI4 -> %pI4\n", &src_ip, &dest_ip);
     return NF_ACCEPT;
 }
-
-static struct nf_hook_ops tcp_logger_hook;
 
 static int __init tcp_logger_init(void) {
     tcp_logger_hook = (struct nf_hook_ops){
