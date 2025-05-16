@@ -1,0 +1,71 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <signal.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/resource.h>
+#include <bpf/libbpf.h>
+#include "hello_kern.skel.h"
+
+static volatile sig_atomic_t stop = 0;
+
+static void sig_int(int signo) {
+    stop = 1;
+}
+
+static int libbpf_print_fn(enum libbpf_print_level level, const char *format, va_list args) {
+    if (level == LIBBPF_WARN && !getenv("LIBBPF_STRICT_MODE")) {
+        return 0;
+    }
+    return vfprintf(stderr, format, args);
+}
+
+int main(int argc, char **argv) {
+    struct hello_kern_bpf *skel;
+    int err;
+
+    libbpf_set_print(libbpf_print_fn);
+
+    struct rlimit r = {RLIM_INFINITY, RLIM_INFINITY};
+    if (setrlimit(RLIMIT_MEMLOCK, &r)) {
+        perror("setrlimit(RLIMIT_MEMLOCK)");
+        return 1;
+    }
+
+    skel = hello_kern_bpf__open_and_load();
+    if (!skel) {
+        fprintf(stderr, "Failed to open and load BPF skeleton\n");
+        return 1;
+    }
+
+    err = hello_kern_bpf__attach(skel);
+    if (err) {
+        fprintf(stderr, "Failed to attach BPF skeleton: %s\n", strerror(-err));
+        goto cleanup;
+    }
+
+    printf("Successfully started! Please run `sudo cat /sys/kernel/debug/tracing/trace_pipe` "
+           "to see output from the BPF program.\n");
+    printf("Trigger the __x64_sys_clone syscall (e.g., by starting a new process like `ls` or `ps`) to see the BPF message.\n");
+    printf("Press Ctrl-C to stop.\n");
+
+    if (signal(SIGINT, sig_int) == SIG_ERR) {
+        fprintf(stderr, "Can't set signal handler: %s\n", strerror(errno));
+        err = 1;
+        goto cleanup;
+    }
+
+    while (!stop) {
+        sleep(1);
+    }
+
+    printf("\nExiting...\n");
+
+cleanup:
+    if (skel) {
+        hello_kern_bpf__destroy(skel);
+    }
+    return -err;
+}
+
