@@ -1,4 +1,4 @@
-obj-m += tcp-hook.o
+obj-m += udp-hook.o
 PWD := $(CURDIR)
 all:
 	$(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
