@@ -6,7 +6,7 @@
 #include <errno.h>
 #include <sys/resource.h>
 #include <bpf/libbpf.h>
-#include "hello_kern.skel.h"
+#include "udp-hook.skel.h"
 
 static volatile sig_atomic_t stop = 0;
 
@@ -22,7 +22,7 @@ static int libbpf_print_fn(enum libbpf_print_level level, const char *format, va
 }
 
 int main(int argc, char **argv) {
-    struct hello_kern_bpf *skel;
+    struct udp_hook_bpf *skel;
     int err;
 
     libbpf_set_print(libbpf_print_fn);
@@ -33,13 +33,13 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    skel = hello_kern_bpf__open_and_load();
+    skel = udp_hook_bpf__open_and_load();
     if (!skel) {
-        fprintf(stderr, "Failed to open and load BPF skeleton\n");
+        fprintf(stderr, "Failed to open and load BPF skeleton: %s\n", strerror(errno));
         return 1;
     }
 
-    err = hello_kern_bpf__attach(skel);
+    err = udp_hook_bpf__attach(skel);
     if (err) {
         fprintf(stderr, "Failed to attach BPF skeleton: %s\n", strerror(-err));
         goto cleanup;
@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
 
 cleanup:
     if (skel) {
-        hello_kern_bpf__destroy(skel);
+        udp_hook_bpf__destroy(skel);
     }
     return -err;
 }

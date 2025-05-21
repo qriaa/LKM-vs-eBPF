@@ -9,13 +9,19 @@ USER_CFLAGS := -g -Wall
 # LDFLAGS for userspace program
 USER_LDFLAGS := -lbpf
 
-BPF_OBJ := hello_kern.bpf.o
-BPF_SKEL := hello_kern.skel.h
-USER_PROG := hello_kern_user
+VMLINUX := vmlinux.h
+BPF_SRC := udp-hook.bpf.c
+BPF_OBJ := udp-hook.bpf.o
+BPF_SKEL := udp-hook.skel.h
+USER_SRC := udp-hook-user.c
+USER_PROG := udp-hook
 
 all: $(USER_PROG)
 
-$(BPF_OBJ): hello_kern.bpf.c
+vmlinux.h:
+	$(BPFTOOL) btf dump file /sys/kernel/btf/vmlinux format c > vmlinux.h || rm vmlinux.h
+
+$(BPF_OBJ): $(BPF_SRC) $(VMLINUX)
 	$(CLANG) \
 		-g -O2 -target bpf \
 		-D__TARGET_ARCH_x86 \
@@ -24,11 +30,11 @@ $(BPF_OBJ): hello_kern.bpf.c
 $(BPF_SKEL): $(BPF_OBJ)
 	$(BPFTOOL) gen skeleton $< > $@
 
-$(USER_PROG): hello_kern_user.c $(BPF_SKEL)
+$(USER_PROG): $(USER_SRC) $(BPF_SKEL)
 	$(CC) $(USER_CFLAGS) $< -o $@ $(USER_LDFLAGS)
 
 clean:
-	rm -f $(BPF_OBJ) $(BPF_SKEL) $(USER_PROG)
+	rm -f $(BPF_OBJ) $(BPF_SKEL) $(USER_PROG) $(VMLINUX)
 	rm -rf .tmp_vmlinux*
 
 .PHONY: all clean
