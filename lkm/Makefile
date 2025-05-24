@@ -1,5 +1,6 @@
 obj-m += udp-hook.o
 PWD := $(CURDIR)
+ccflags-y += -g
 all:
 	$(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
 clean:

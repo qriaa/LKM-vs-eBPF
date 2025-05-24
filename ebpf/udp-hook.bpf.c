@@ -5,7 +5,7 @@
 
 char LICENSE[] SEC("license") = "GPL";
 
-SEC("kprobe/ip_rcv")
+SEC("kprobe/ip_rcv_core")
 int bpf_ip_rcv(struct pt_regs *ctx) {
     struct sk_buff *skb;
 
