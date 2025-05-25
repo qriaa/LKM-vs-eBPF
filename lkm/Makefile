@@ -1,4 +1,4 @@
-obj-m += udp-hook.o
+obj-m += nf-hook.o
 PWD := $(CURDIR)
 ccflags-y += -g
 all:
