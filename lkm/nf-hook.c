@@ -4,14 +4,15 @@
 #include <linux/netfilter_ipv4.h>
 #include <linux/ip.h>
 #include <linux/inet.h>
+#include <linux/compiler_attributes.h>
 
-unsigned int udp_logger(void *priv,
+static __noclone noinline unsigned int udp_logger(void *priv,
                         struct sk_buff *skb,
                         const struct nf_hook_state *state);
 
 static struct nf_hook_ops udp_logger_hook;
 
-unsigned int udp_logger(void *priv,
+static __noclone noinline unsigned int udp_logger(void *priv,
                         struct sk_buff *skb,
                         const struct nf_hook_state *state) {
     struct iphdr *ip_header;
