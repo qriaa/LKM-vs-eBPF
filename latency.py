@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
+from argparse import ArgumentParser
 import subprocess
 import statistics
+
+parser = ArgumentParser()
+parser.add_argument("-f", "--file", default='perf.data', dest="filename", help="Grab data from FILE")
+parser.add_argument("-p", "--probe", dest="probe", help="Name of function's probe")
+parser.add_argument("-r", "--return-probe", dest="return_probe", help="Name of function's return probe")
+args = parser.parse_args()
 
 def bash(command):
     try:
@@ -21,7 +28,7 @@ def bash(command):
         print(f"'{command}' not found.")
         return None, None
 
-command = 'perf script --ns -F cpu,time,event | grep udp_logger'
+command = f'perf script -i "{args.filename}" --ns -F cpu,time,event | grep -e "{args.probe}" -e "{args.return_probe}"'
 print(f"Running {command}")
 stdout, stderr = bash(command)
 
@@ -51,9 +58,9 @@ for events in cpus.values():
     open_time = 0
 
     for event in events:
-        if event[0] == 'probe:udp_logger':
+        if event[0] == args.probe:
             opening_event = True
-        elif event[0] == 'probe:udp_logger__return':
+        elif event[0] == args.return_probe:
             opening_event = False
         else:
             print("Unrecognized event!")
@@ -74,6 +81,9 @@ for events in cpus.values():
 
         scanned_events += 1
 
+print(f"Calculated latency for '{args.filename}'")
+print(f"Function probe: {args.probe}")
+print(f"Function return probe: {args.return_probe}")
 print(f"Scanned events: {scanned_events}")
 print(f"Discarded events: {discarded_events}")
 print(f"Mean: {statistics.mean(latencies)}")
