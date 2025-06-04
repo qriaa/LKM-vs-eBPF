@@ -6,9 +6,11 @@ if [ "$EUID" != 0 ]; then
     exit $?
 fi
 
-MODULE_FILE='./nf-hook.ko'
-MODULE_NAME='nf_hook'
-FUNCTION_NAME='udp_logger'
+IPERF_CONN_NUM=2
+
+MODULE_FILE='./firewall.ko'
+MODULE_NAME='firewall'
+FUNCTION_NAME='firewall'
 
 insmod $MODULE_FILE
 
@@ -16,14 +18,14 @@ insmod $MODULE_FILE
 sudo perf probe -m $MODULE_NAME --add "$FUNCTION_NAME"
 sudo perf probe -m $MODULE_NAME --add "$FUNCTION_NAME%return"
 
-iperf3 -s -1 &
-IPERF_PID=$!
-
 # -m increases buffer amount, prevents losing chunks
 perf record -q -a -m 8M -e "cpu-clock/call-graph=dwarf/" -e "probe:$FUNCTION_NAME/call-graph=no/" -e "probe:${FUNCTION_NAME}__return/call-graph=no/" &
 PERF_PID=$!
 
-wait $IPERF_PID
+for ((i=1;i<=IPERF_CONN_NUM;i++)); do
+    iperf3 -s -1
+done
+
 kill -s SIGINT $PERF_PID
 wait $PERF_PID
 

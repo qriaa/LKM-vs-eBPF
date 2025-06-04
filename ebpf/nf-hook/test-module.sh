@@ -19,7 +19,7 @@ iperf3 -s -1 &
 IPERF_PID=$!
 
 # -m increases buffer amount, prevents losing chunks
-perf record -q -a -g -m 16M -e "cycles" -e "probe:$FUNCTION_NAME" -e "probe:${FUNCTION_NAME}__return" &
+perf record -q -a -g -m 16M -e "cpu-clock/call-graph=dwarf/" -e "probe:$FUNCTION_NAME/call-graph=no/" -e "probe:${FUNCTION_NAME}__return/call-graph=no/" &
 PERF_PID=$!
 
 wait $IPERF_PID
