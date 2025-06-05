@@ -14,8 +14,9 @@ ADDRESSES=(
     "192.168.0.101"
 )
 TESTS=(
-    "ebpf-nf-firewall"
     "lkm-firewall"
+    "ebpf-nf-firewall"
+    "xdp-firewall"
 )
 
 for RUNNING_TEST in "${TESTS[@]}"; do

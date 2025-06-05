@@ -8,7 +8,8 @@ ensure_sudo
 
 PERF_RESULTS_PATH=$SCRIPT_DIR/../../results/scenario-1/perf-data/ebpf-nf-firewall.data
 IPERF_CONN_NUM=2
-FUNCTION_NAME='nf_hook_run_bpf'
+FUNCTION_NAME='net_rx_action'
+#FUNCTION_NAME='nf_hook_run_bpf'
 EBPF_LOADER_PATH="$SCRIPT_DIR/../../ebpf/nf-firewall/nf-firewall"
 
 sudo $EBPF_LOADER_PATH &

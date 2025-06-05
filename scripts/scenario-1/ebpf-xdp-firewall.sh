@@ -6,14 +6,14 @@ SCRIPT_DIR=$(dirname "$0")
 
 ensure_sudo
 
-PERF_RESULTS_PATH=$SCRIPT_DIR/../../results/scenario-1/perf-data/lkm-firewall.data
+PERF_RESULTS_PATH=$SCRIPT_DIR/../../results/scenario-1/perf-data/ebpf-xdp-firewall.data
 IPERF_CONN_NUM=2
-MODULE_FILE=$SCRIPT_DIR/../../lkm/firewall/firewall.ko
-MODULE_NAME='firewall'
 FUNCTION_NAME='net_rx_action'
-#FUNCTION_NAME='firewall'
+EBPF_LOADER_PATH="$SCRIPT_DIR/../../ebpf/xdp-firewall/xdp-firewall"
+NET_IF="enp0s25"
 
-insmod $MODULE_FILE
+sudo $EBPF_LOADER_PATH $NET_IF &
+EBPF_LOADER_PID=$!
 
 # add probes
 sudo perf probe --add "$FUNCTION_NAME"
@@ -37,4 +37,4 @@ wait $PERF_PID
 sudo perf probe --del "$FUNCTION_NAME"
 sudo perf probe --del "${FUNCTION_NAME}__return"
 
-rmmod $MODULE_NAME
+kill -s SIGINT $EBPF_LOADER_PID

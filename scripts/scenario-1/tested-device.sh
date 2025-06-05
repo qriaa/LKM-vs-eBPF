@@ -8,8 +8,11 @@ ensure_sudo
 
 mkdir -p $SCRIPT_DIR/../../results/scenario-1/perf-data/
 
+echo "Testing LKM Netfilter firewall..."
+$SCRIPT_DIR/lkm-firewall.sh
+
 echo "Testing eBPF Netfilter firewall..."
 $SCRIPT_DIR/ebpf-nf-firewall.sh
 
-echo "Testing LKM Netfilter firewall..."
-$SCRIPT_DIR/lkm-firewall.sh
+echo "Testing eBPF XDP firewall..."
+$SCRIPT_DIR/ebpf-xdp-firewall.sh
