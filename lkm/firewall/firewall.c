@@ -29,9 +29,8 @@ static unsigned int firewall(void *priv,
                         const struct nf_hook_state *state) {
     struct iphdr *ip_header;
 
-    if (!skb) {
+    if (!skb)
         return NF_ACCEPT;
-    }
 
     ip_header = ip_hdr(skb);
 
@@ -40,7 +39,7 @@ static unsigned int firewall(void *priv,
     }
 
     __be32 src_ip = ip_header->saddr;
-    __be32 dest_ip = ip_header->daddr;
+    // __be32 dest_ip = ip_header->daddr;
 
     for(int i = 0; i < blocked_ips_size; i++) {
         if (src_ip == blocked_ips[i]) {
@@ -49,9 +48,9 @@ static unsigned int firewall(void *priv,
             // in order to try sending more.
             // This can be fixed by writing a custom packet spammer.
             // https://github.com/esnet/iperf/blob/master/src/iperf_udp.c#L273
-            if(dropped_packets < 8) { 
-                continue;
-            }
+            if(dropped_packets < 8)
+                return NF_ACCEPT;
+
             return NF_DROP;
         }
     }

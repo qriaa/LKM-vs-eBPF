@@ -55,9 +55,8 @@ int nf_firewall(struct bpf_nf_ctx *ctx) {
             // in order to try sending more.
             // This can be fixed by writing a custom packet spammer.
             // https://github.com/esnet/iperf/blob/master/src/iperf_udp.c#L273
-            if(dropped_packets < 8) { 
-                continue;
-            }
+            if(dropped_packets < 8)
+                return XDP_PASS;
             return NF_DROP;
         }
     }

@@ -103,12 +103,14 @@ print(f"Stdev: {stdev}")
 
 print("Generating chart...")
 
+min_latency=0
+max_latency=0.0007
 fig, ax = plt.subplots(figsize=(5, 3), layout='constrained')
-ax.axis([0, 0.001, 0, 15000])
+ax.axis([min_latency, max_latency, 0, 50000])
 ax.set_xlabel(r'Opóźnienia [${\mu}s$]')
 ax.xaxis.set_major_formatter(lambda x, pos: round(x*1000000))
 ax.axvline(x=median, color='r', linestyle='--')
 ax.set_ylabel('Zaobserwowane wywołania funkcji')
-ax.hist(latencies, bins=np.linspace(0, 0.001, num=100))
+ax.hist(latencies, bins=np.linspace(min_latency, max_latency, num=100))
 plt.savefig(args.chart_file)
 print(f"Chart generated into file '{args.chart_file}'")
