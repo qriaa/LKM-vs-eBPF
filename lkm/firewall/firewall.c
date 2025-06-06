@@ -4,7 +4,7 @@
 #include <linux/netfilter_ipv4.h>
 #include <linux/ip.h>
 #include <linux/inet.h>
-#include <linux/compiler_attributes.h>
+//#include <linux/compiler_attributes.h>
 #include <linux/array_size.h>
 #include <linux/byteorder/generic.h>
 
@@ -23,7 +23,8 @@ static int blocked_ips_size = ARRAY_SIZE(blocked_ips);
 
 static unsigned int dropped_packets = 0;
 
-static __noclone noinline unsigned int firewall(void *priv,
+// __noclone noinline 
+static unsigned int firewall(void *priv,
                         struct sk_buff *skb,
                         const struct nf_hook_state *state) {
     struct iphdr *ip_header;
@@ -55,7 +56,7 @@ static __noclone noinline unsigned int firewall(void *priv,
         }
     }
 
-    pr_info("[PACKET] %pI4 -> %pI4\n", &src_ip, &dest_ip);
+    // pr_info("[PACKET] %pI4 -> %pI4\n", &src_ip, &dest_ip);
     return NF_ACCEPT;
 }
 

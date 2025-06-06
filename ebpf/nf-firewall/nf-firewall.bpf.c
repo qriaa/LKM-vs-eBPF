@@ -62,7 +62,7 @@ int nf_firewall(struct bpf_nf_ctx *ctx) {
         }
     }
 
-    bpf_printk("Packet: %pI4 -> %pI4\n", &src_ip, &dest_ip);
+    // bpf_printk("Packet: %pI4 -> %pI4\n", &src_ip, &dest_ip);
 
     return NF_ACCEPT;
 }

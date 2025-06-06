@@ -66,7 +66,7 @@ int xdp_firewall(struct xdp_md *ctx) {
         }
     }
 
-    bpf_printk("Packet: %pI4 -> %pI4\n", &src_ip, &dest_ip);
+    // bpf_printk("Packet: %pI4 -> %pI4\n", &src_ip, &dest_ip);
 
     return XDP_PASS;
 }
