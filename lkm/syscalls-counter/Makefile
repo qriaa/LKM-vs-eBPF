@@ -1,6 +1,6 @@
 obj-m += syscalls-counter.o
 PWD := $(CURDIR)
-ccflags-y += -g
+#ccflags-y += -g
 all:
 	$(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
 clean:

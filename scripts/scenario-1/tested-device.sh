@@ -8,6 +8,9 @@ ensure_sudo
 
 mkdir -p $SCRIPT_DIR/../../results/scenario-1/perf-data/
 
+echo "Testing no firewall..."
+$SCRIPT_DIR/control-firewall.sh
+
 echo "Testing LKM Netfilter firewall..."
 $SCRIPT_DIR/lkm-firewall.sh
 

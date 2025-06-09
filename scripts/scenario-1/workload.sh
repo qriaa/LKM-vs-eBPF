@@ -14,6 +14,7 @@ ADDRESSES=(
     "192.168.0.101"
 )
 TESTS=(
+    "control-firewall"
     "lkm-firewall"
     "ebpf-nf-firewall"
     "xdp-firewall"

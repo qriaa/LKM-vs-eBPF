@@ -6,6 +6,7 @@ from latency import get_latencies
 
 tracked_function = "net_rx_action"
 tests = [
+    "control-firewall",
     "lkm-firewall",
     "ebpf-nf-firewall",
     "ebpf-xdp-firewall"
@@ -27,13 +28,16 @@ print("Generating chart...")
 
 min_latency=0
 max_latency=0.00075
+# max_latency=0.00025
 min_counts=0
 max_counts=25000
+# max_counts=10000
 
-fig, axs = plt.subplots(3, 1, sharex=True)
+fig, axs = plt.subplots(4, 1, sharex=True)
 fig.subplots_adjust(hspace=0)
 
 test_id_to_legend = {
+    "control-firewall": "Test kontrolny",
     "lkm-firewall": "LKM z Netfilter",
     "ebpf-nf-firewall": "eBPF z Netfilter",
     "ebpf-xdp-firewall": "eBPF z XDP"

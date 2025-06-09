@@ -28,7 +28,7 @@ print("Generating chart...")
 min_latency=0
 max_latency=0.0002
 min_counts=0
-max_counts=1000
+max_counts=850
 
 fig, axs = plt.subplots(3, 1, sharex=True)
 fig.subplots_adjust(hspace=0)

@@ -4,12 +4,11 @@
 #include <linux/netfilter_ipv4.h>
 #include <linux/ip.h>
 #include <linux/inet.h>
-//#include <linux/compiler_attributes.h>
 #include <linux/array_size.h>
 #include <linux/byteorder/generic.h>
 
 
-static __noclone noinline unsigned int firewall(void *priv,
+static unsigned int firewall(void *priv,
                         struct sk_buff *skb,
                         const struct nf_hook_state *state);
 
@@ -23,7 +22,6 @@ static int blocked_ips_size = ARRAY_SIZE(blocked_ips);
 
 static unsigned int dropped_packets = 0;
 
-// __noclone noinline 
 static unsigned int firewall(void *priv,
                         struct sk_buff *skb,
                         const struct nf_hook_state *state) {
