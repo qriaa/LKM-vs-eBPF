@@ -9,20 +9,18 @@ static unsigned int syscall_count = 0;
 
 int count_syscalls(struct kprobe *p, struct pt_regs *regs) {
     syscall_count += 1;
+    // pr_info("siscol!...\n");
     return 0;
 }
 
-static struct kprobe syscall_kprobe = {
-    // Ran on every syscall
-    // arch/x86/entry/common.c#L83
-    // Other symbols such as do_syscall_64 are in the kprobe blacklist
-    .symbol_name = "x64_sys_call",
+static struct kprobe execve_kprobe = {
+    .symbol_name = "__x64_sys_execve",
     .pre_handler = count_syscalls,
 };
 
 static int __init syscalls_counter_init(void) {
     pr_info("Loading syscalls module...\n");
-    int ret = register_kprobe(&syscall_kprobe);
+    int ret = register_kprobe(&execve_kprobe);
     if (ret) {
         pr_err("syscalls: failed to register kprobe: %d\n", ret);
         return ret;
@@ -33,7 +31,7 @@ static int __init syscalls_counter_init(void) {
 
 static void __exit syscalls_counter_exit(void) {
     pr_info("Unloading syscalls module...\n");
-    unregister_kprobe(&syscall_kprobe);
+    unregister_kprobe(&execve_kprobe);
     pr_info("Counted syscalls: %d\n", syscall_count);
     pr_info("Syscalls unloaded.\n");
 }
