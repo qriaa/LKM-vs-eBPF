@@ -4,25 +4,25 @@ SCRIPT_DIR=$(dirname "$0")
 
 . $SCRIPT_DIR/../utils.sh
 
-ensure_sudo
-
-PROBED_FUNCTION='net_rx_action'
+PERF_RESULTS_PATH="$SCRIPT_DIR/../../results/scenario-1/perf-data/"
+LATENCIES_PATH="$SCRIPT_DIR/../../results/scenario-1/latency-data/"
 TESTS=(
+    'control-firewall'
     'lkm-firewall'
     'ebpf-nf-firewall'
     'ebpf-xdp-firewall'
 )
+FUNCTION='net_rx_action'
 
-PERF_DATA_DIR="$SCRIPT_DIR/../../results/scenario-1/perf-data/"
-LATENCY_CHARTS_DIR="$SCRIPT_DIR/../../results/scenario-1/latency-charts/"
 
-mkdir -p $LATENCY_CHARTS_DIR
+mkdir -p $LATENCIES_PATH
 
 . $SCRIPT_DIR/../../.venv/bin/activate
 
 for TEST in "${TESTS[@]}"; do
-    python3 $SCRIPT_DIR/../latency.py \
-        -f "${PERF_DATA_DIR}${TEST}.data" \
-        -p "$PROBED_FUNCTION" \
-        -c "${LATENCY_CHARTS_DIR}${TEST}.png"
+    echo "Processing latencies for $TEST..."
+    python3 scripts/latency.py \
+        -i "${PERF_RESULTS_PATH}${TEST}.data" \
+        -o "${LATENCIES_PATH}${TEST}.json" \
+        -p "${FUNCTION}"
 done

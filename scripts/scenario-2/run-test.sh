@@ -16,3 +16,6 @@ $SCRIPT_DIR/lkm-syscalls-counter.sh
 
 echo "Testing eBPF syscall counting..."
 $SCRIPT_DIR/ebpf-syscalls-counter.sh
+
+echo "Testing eBPF no JIT syscall counting..."
+$SCRIPT_DIR/ebpf-nojit-syscalls-counter.sh

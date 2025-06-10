@@ -97,7 +97,7 @@ def get_latencies(file, tracked_function):
     latencies, scanned_events, discarded_events = calc_latencies_for_probe_pair(all_events, probe, return_probe)
     print(f"Scanned events: {scanned_events}")
     print(f"Discarded events: {discarded_events}")
-    return latencies
+    return {tracked_function: latencies}
 
 
 def get_latencies_multiple(file, tracked_functions):
@@ -139,12 +139,7 @@ if __name__ == '__main__':
     parser.add_argument("-p", "--probes", nargs='+', dest="probes", help="Probes to calc latency for")
     args = parser.parse_args()
 
-    output = None
-    if(len(args.probes) == 1):
-        latencies, scanned_events, discarded_events = get_latencies(args.input, args.probes[0])
-        output = latencies
-    else:
-        output = get_latencies_multiple(args.input, args.probes)
+    output = get_latencies_multiple(args.input, args.probes)
 
     print(f"Saving output to {args.output}...")
     with open(args.output, 'w') as f:

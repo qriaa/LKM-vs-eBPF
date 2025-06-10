@@ -9,6 +9,7 @@ LATENCIES_PATH=$SCRIPT_DIR/../../results/scenario-2/latency-data/
 TESTS=(
     'control-syscalls-counter'
     'lkm-syscalls-counter'
+    'ebpf-nojit-syscalls-counter'
     'ebpf-syscalls-counter'
 )
 FUNCTIONS=(
