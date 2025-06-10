@@ -7,19 +7,32 @@ SCRIPT_DIR=$(dirname "$0")
 ensure_sudo
 
 PERF_RESULTS_PATH=$SCRIPT_DIR/../../results/scenario-2/perf-data/control-syscalls-counter.data
-FUNCTION_NAME='__x64_sys_execve'
+FUNCTIONS=(
+    '__x64_sys_execve'
+    '__x64_sys_openat'
+    '__x64_sys_read'
+    '__x64_sys_write'
+)
 
-# add probes
-sudo perf probe --add "$FUNCTION_NAME"
-sudo perf probe --add "$FUNCTION_NAME%return"
+for FUNCTION_NAME in "${FUNCTIONS[@]}"; do
+    sudo perf probe --add "$FUNCTION_NAME"
+    sudo perf probe --add "$FUNCTION_NAME%return"
+done;
 
 # -m increases buffer amount, prevents losing chunks
-perf record -q -a -m 16M -o $PERF_RESULTS_PATH \
+perf record -a -m 16M -o $PERF_RESULTS_PATH \
     -e "cpu-clock/call-graph=dwarf/" \
-    -e "probe:$FUNCTION_NAME/call-graph=no/" \
-    -e "probe:${FUNCTION_NAME}__return/call-graph=no/" &
+    -e "probe:__x64_sys_execve/call-graph=no/" \
+    -e "probe:__x64_sys_execve__return/call-graph=no/" \
+    -e "probe:__x64_sys_openat/call-graph=no/" \
+    -e "probe:__x64_sys_openat__return/call-graph=no/" \
+    -e "probe:__x64_sys_read/call-graph=no/" \
+    -e "probe:__x64_sys_read__return/call-graph=no/" \
+    -e "probe:__x64_sys_write/call-graph=no/" \
+    -e "probe:__x64_sys_write__return/call-graph=no/" &
 PERF_PID=$!
 
+sleep 2
 # run workload
 for ((i = 0 ; i < 10000 ; i++ )); do
     ls
@@ -28,3 +41,7 @@ done
 kill -s SIGINT $PERF_PID
 wait $PERF_PID
 
+for FUNCTION_NAME in "${FUNCTIONS[@]}"; do
+    sudo perf probe --del "$FUNCTION_NAME"
+    sudo perf probe --del "${FUNCTION_NAME}__return"
+done;
