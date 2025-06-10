@@ -2,27 +2,70 @@
 #include <linux/printk.h>
 #include <linux/ptrace.h>
 #include <linux/kprobes.h>
+#include <linux/atomic.h>
 
-int count_syscalls(struct kprobe *p, struct pt_regs *regs);
+// Defining multiple kprobes should delay syscall execution less
+int count_execve(struct kprobe *p, struct pt_regs *regs);
+int count_openat(struct kprobe *p, struct pt_regs *regs);
+int count_read(struct kprobe *p, struct pt_regs *regs);
+int count_write(struct kprobe *p, struct pt_regs *regs);
 
-static unsigned int syscall_count = 0;
-
-int count_syscalls(struct kprobe *p, struct pt_regs *regs) {
-    syscall_count += 1;
-    // pr_info("siscol!...\n");
+static atomic_t execve_count = ATOMIC_INIT(0);
+int count_execve(struct kprobe *p, struct pt_regs *regs) {
+    atomic_inc(&execve_count);
     return 0;
 }
 
-static struct kprobe execve_kprobe = {
+static atomic_t openat_count = ATOMIC_INIT(0);
+int count_openat(struct kprobe *p, struct pt_regs *regs) {
+    atomic_inc(&openat_count);
+    return 0;
+}
+
+static atomic_t read_count = ATOMIC_INIT(0);
+int count_read(struct kprobe *p, struct pt_regs *regs) {
+    atomic_inc(&read_count);
+    return 0;
+}
+
+static atomic_t write_count = ATOMIC_INIT(0);
+int count_write(struct kprobe *p, struct pt_regs *regs) {
+    atomic_inc(&write_count);
+    return 0;
+}
+
+static struct kprobe kprobe_execve = {
     .symbol_name = "__x64_sys_execve",
-    .pre_handler = count_syscalls,
+    .pre_handler = count_execve,
+};
+
+static struct kprobe kprobe_openat = {
+    .symbol_name = "__x64_sys_openat",
+    .pre_handler = count_openat,
+};
+
+static struct kprobe kprobe_read = {
+    .symbol_name = "__x64_sys_read",
+    .pre_handler = count_read,
+};
+
+static struct kprobe kprobe_write = {
+    .symbol_name = "__x64_sys_write",
+    .pre_handler = count_write,
+};
+
+static struct kprobe *kprobes[] = {
+    &kprobe_execve,
+    &kprobe_openat,
+    &kprobe_read,
+    &kprobe_write,
 };
 
 static int __init syscalls_counter_init(void) {
     pr_info("Loading syscalls module...\n");
-    int ret = register_kprobe(&execve_kprobe);
+    int ret = register_kprobes(kprobes, sizeof(kprobes) / sizeof(kprobes[0]));
     if (ret) {
-        pr_err("syscalls: failed to register kprobe: %d\n", ret);
+        pr_err("syscalls: failed to register kprobes: %d\n", ret);
         return ret;
     }
     pr_info("Syscalls loaded.\n");
@@ -31,8 +74,11 @@ static int __init syscalls_counter_init(void) {
 
 static void __exit syscalls_counter_exit(void) {
     pr_info("Unloading syscalls module...\n");
-    unregister_kprobe(&execve_kprobe);
-    pr_info("Counted syscalls: %d\n", syscall_count);
+    unregister_kprobes(kprobes, sizeof(kprobes) / sizeof(kprobes[0]));
+    pr_info("Counted execve syscalls: %d\n", atomic_read(&execve_count));
+    pr_info("Counted openat syscalls: %d\n", atomic_read(&openat_count));
+    pr_info("Counted read syscalls: %d\n", atomic_read(&read_count));
+    pr_info("Counted write syscalls: %d\n", atomic_read(&write_count));
     pr_info("Syscalls unloaded.\n");
 }
 
