@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import json
 import subprocess
 from argparse import ArgumentParser
 import statistics
@@ -24,19 +25,12 @@ def bash(command):
         print(f"'{command}' not found.")
         return None, None
 
-def get_latencies(file, tracked_function):
-    probe = f"probe:{tracked_function}"
-    return_probe = f"probe:{tracked_function}__return"
-
-    command = f'perf script -i "{file}" --ns -F cpu,time,event | grep -e "{probe}" -e "{return_probe}"'
-    print(f"Running {command}")
-    stdout, stderr = bash(command)
-
-    print("Calculating latencies...")
-    event_strings = stdout.split('\n')
+def parse_perf_output(perf_output):
+    print("Parsing perf output...")
+    table = []
+    event_strings = perf_output.split('\n')
     event_strings.pop() # Last element is empty
 
-    cpus = {}
     for event_string in event_strings:
         cpu, time, event = event_string.split()
 
@@ -44,9 +38,15 @@ def get_latencies(file, tracked_function):
         time = float(time[:-1]) # Trailing ':'
         event = event[:-1] # Trailing ':'
 
+        table.append((cpu, time, event))
+    return table
+
+def calc_latencies_for_probe_pair(data, probe, return_probe):
+    cpus = {}
+    for event in data:
+        cpu, time, event = event
         if cpu not in cpus:
             cpus[cpu] = []
-
         cpus[cpu].append((event, time))
 
     latencies = []
@@ -63,12 +63,12 @@ def get_latencies(file, tracked_function):
             elif event[0] == return_probe:
                 opening_event = False
             else:
-                print("Unrecognized event!")
+                #print("Unrecognized event!")
                 discarded_events += 1
                 continue
 
             if (event_open == opening_event):
-                print("Duplicate events")
+                #print("Duplicate events")
                 discarded_events += 1
                 continue
 
@@ -80,42 +80,73 @@ def get_latencies(file, tracked_function):
                 latencies.append(event[1] - open_time)
 
             scanned_events += 1
-
     return (latencies, scanned_events, discarded_events)
+
+
+def get_latencies(file, tracked_function):
+    probe = f"probe:{tracked_function}"
+    return_probe = f"probe:{tracked_function}__return"
+
+    command = f'perf script -i "{file}" --ns -F cpu,time,event | grep -e "{probe}" -e "{return_probe}"'
+    print(f"Running {command}")
+    stdout, stderr = bash(command)
+
+    print("Calculating latencies...")
+    all_events = parse_perf_output(stdout)
+
+    latencies, scanned_events, discarded_events = calc_latencies_for_probe_pair(all_events, probe, return_probe)
+    print(f"Scanned events: {scanned_events}")
+    print(f"Discarded events: {discarded_events}")
+    return latencies
+
+
+def get_latencies_multiple(file, tracked_functions):
+    command = f'perf script -i "{file}" --ns -F cpu,time,event'
+    print(f"Running {command}")
+    stdout, stderr = bash(command)
+
+    print("Calculating latencies...")
+    all_events = parse_perf_output(stdout)
+
+    print("Separating events...")
+    by_function = {}
+    for event in all_events:
+        for function in tracked_functions:
+            probe = f"probe:{function}"
+            return_probe = f"probe:{function}__return"
+
+            if event[2] in [probe, return_probe]:
+                if function not in by_function:
+                    by_function[function] = []
+                by_function[function].append(event)
+
+    for function, data in by_function.items():
+        probe = f"probe:{function}"
+        return_probe = f"probe:{function}__return"
+
+        latencies, scanned_events, discarded_events = calc_latencies_for_probe_pair(data, probe, return_probe)
+        print(f"Function {function}:")
+        print(f"Scanned events: {scanned_events}")
+        print(f"Discarded events: {discarded_events}")
+        by_function[function] = latencies
+    return by_function
 
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument("-f", "--file", default='perf.data', dest="filename", help="Grab data from FILE")
-    parser.add_argument("-p", "--probe", dest="probe", help="Name of tracked function")
-    #parser.add_argument("-r", "--return-probe", dest="return_probe", help="Name of function's return probe")
-    parser.add_argument("-c", "--chart-file", default='chart.png', dest="chart_file", help="Save chart to filename")
+    parser.add_argument("-i", "--input", default='perf.data', dest="input", help="Grab data from FILE")
+    parser.add_argument("-o", "--output", default='latencies.json', dest="output", help="Save latencies to FILE")
+    parser.add_argument("-p", "--probes", nargs='+', dest="probes", help="Probes to calc latency for")
     args = parser.parse_args()
 
-    latencies, scanned_events, discarded_events = get_latencies(args.filename, args.probe)
+    output = None
+    if(len(args.probes) == 1):
+        latencies, scanned_events, discarded_events = get_latencies(args.input, args.probes[0])
+        output = latencies
+    else:
+        output = get_latencies_multiple(args.input, args.probes)
 
-    mean = statistics.mean(latencies)
-    median = statistics.median(latencies)
-    stdev = statistics.stdev(latencies)
+    print(f"Saving output to {args.output}...")
+    with open(args.output, 'w') as f:
+        json.dump(output, f)
 
-    print(f"Calculated latencies for '{args.filename}'")
-    print(f"Probed function: {args.probe}")
-    print(f"Scanned events: {scanned_events}")
-    print(f"Discarded events: {discarded_events}")
-    print(f"Mean: {mean}")
-    print(f"Median: {median}")
-    print(f"Stdev: {stdev}")
-
-    print("Generating chart...")
-
-    min_latency=0
-    max_latency=0.0007
-    fig, ax = plt.subplots(figsize=(5, 3), layout='constrained')
-    ax.axis([min_latency, max_latency, 0, 50000])
-    ax.set_xlabel(r'Opóźnienia [${\mu}s$]')
-    ax.xaxis.set_major_formatter(lambda x, pos: round(x*1000000))
-    ax.axvline(x=median, color='r', linestyle='--')
-    ax.set_ylabel('Zaobserwowane wywołania funkcji')
-    ax.hist(latencies, bins=np.linspace(min_latency, max_latency, num=100))
-    plt.savefig(args.chart_file)
-    print(f"Chart generated into file '{args.chart_file}'")
