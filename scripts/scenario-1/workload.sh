@@ -16,8 +16,10 @@ ADDRESSES=(
 TESTS=(
     "control-firewall"
     "lkm-firewall"
+    "ebpf-nojit-nf-firewall"
+    "ebpf-nojit-xdp-firewall"
     "ebpf-nf-firewall"
-    "xdp-firewall"
+    "ebpf-xdp-firewall"
 )
 
 for RUNNING_TEST in "${TESTS[@]}"; do

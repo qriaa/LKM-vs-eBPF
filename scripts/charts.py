@@ -5,9 +5,10 @@ def generate_comparison_hist_chart(
         latency_range,
         count_range,
         data_dict,
-        output_path
+        output_path,
+        figsize = None
         ):
-    fig, axs = plt.subplots(len(data_dict), 1, sharex=True)
+    fig, axs = plt.subplots(len(data_dict), 1, sharex=True, figsize=figsize)
     fig.subplots_adjust(hspace=0)
 
     axis_ranges = [

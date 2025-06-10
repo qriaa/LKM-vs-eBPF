@@ -9,6 +9,8 @@ LATENCIES_PATH="$SCRIPT_DIR/../../results/scenario-1/latency-data/"
 TESTS=(
     'control-firewall'
     'lkm-firewall'
+    "ebpf-nojit-nf-firewall"
+    "ebpf-nojit-xdp-firewall"
     'ebpf-nf-firewall'
     'ebpf-xdp-firewall'
 )

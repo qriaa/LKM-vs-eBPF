@@ -14,6 +14,8 @@ tracked_function = "net_rx_action"
 tests = [
     "control-firewall",
     "lkm-firewall",
+    "ebpf-nojit-nf-firewall",
+    "ebpf-nojit-xdp-firewall",
     "ebpf-nf-firewall",
     "ebpf-xdp-firewall"
 ]
@@ -33,7 +35,9 @@ chart_data = {
     "Test kontrolny": results['control-firewall'][tracked_function],
     "LKM z Netfilter": results['lkm-firewall'][tracked_function],
     "eBPF z Netfilter": results['ebpf-nf-firewall'][tracked_function],
+    "eBPF bez JIT z Netfilter": results['ebpf-nojit-nf-firewall'][tracked_function],
     "eBPF z XDP": results['ebpf-xdp-firewall'][tracked_function],
+    "eBPF bez JIT z XDP": results['ebpf-nojit-xdp-firewall'][tracked_function],
 }
 
 generate_comparison_hist_chart(
@@ -41,5 +45,6 @@ generate_comparison_hist_chart(
         (0, 0.00025),
         (0, 10000),
         chart_data,
-        f"{latency_charts_dir}comparison-chart.png"
+        f"{latency_charts_dir}comparison-chart.png",
+        figsize = (7, 8)
 )
