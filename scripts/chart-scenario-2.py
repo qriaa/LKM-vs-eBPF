@@ -70,7 +70,8 @@ generate_comparison_hist_chart(
 write_data = get_data_for_syscall("write", results)
 generate_comparison_hist_chart(
     (0, 0.000004),
-    (0, 1000000),
+    (0, 3000000),
     write_data,
-    f"{latency_charts_dir}write-chart.png"
+    f"{latency_charts_dir}write-chart.png",
+    y_in_thousands = True
 )
