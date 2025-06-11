@@ -21,6 +21,7 @@ sudo perf probe --add "$FUNCTION_NAME%return"
 
 # -m increases buffer amount, prevents losing chunks
 perf record -q -a -m 16M -o $PERF_RESULTS_PATH \
+    -e "cycles/call-graph=dwarf/" \
     -e "cpu-clock/call-graph=dwarf/" \
     -e "probe:$FUNCTION_NAME/call-graph=no/" \
     -e "probe:${FUNCTION_NAME}__return/call-graph=no/" &
