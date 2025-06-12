@@ -32,19 +32,37 @@ print(f"Loaded JSON for the following tests: {list(results.keys())}")
 print("Generating chart...")
 
 chart_data = {
-    "Test kontrolny": results['control-firewall'][tracked_function],
-    "LKM z Netfilter": results['lkm-firewall'][tracked_function],
-    "eBPF z Netfilter": results['ebpf-nf-firewall'][tracked_function],
-    "eBPF bez JIT z Netfilter": results['ebpf-nojit-nf-firewall'][tracked_function],
-    "eBPF z XDP": results['ebpf-xdp-firewall'][tracked_function],
-    "eBPF bez JIT z XDP": results['ebpf-nojit-xdp-firewall'][tracked_function],
+    "Test kontrolny": results['control-firewall'][tracked_function]["latencies"],
+    "LKM z Netfilter": results['lkm-firewall'][tracked_function]["latencies"],
+    "eBPF z Netfilter": results['ebpf-nf-firewall'][tracked_function]["latencies"],
+    "eBPF bez JIT z Netfilter": results['ebpf-nojit-nf-firewall'][tracked_function]["latencies"],
+    "eBPF z XDP": results['ebpf-xdp-firewall'][tracked_function]["latencies"],
+    "eBPF bez JIT z XDP": results['ebpf-nojit-xdp-firewall'][tracked_function]["latencies"],
 }
 
 generate_comparison_hist_chart(
         #(0, 0.00075),
-        (0, 0.00025),
-        (0, 10000),
+        (0, 0.0005),
+        (0, 20000),
         chart_data,
         f"{latency_charts_dir}comparison-chart.png",
         figsize = (7, 8)
 )
+
+print("Generating LaTeX table...")
+
+rows = []
+rows.append("Test & Ilość opóźnień & Mediana & Średnia & Min & Max \\\\")
+for key, data in chart_data.items():
+    amt = len(data)
+    mean = np.mean(data)
+    median = np.median(data)
+    std = np.std(data)
+    min = np.min(data)
+    max = np.max(data)
+
+    to_mus = lambda x: x*1000000
+    rows.append(f"{key} & {amt} & {to_mus(median):.2f} & {to_mus(mean):.2f} & {to_mus(min):.2f} & {to_mus(max):.2f} \\\\")
+
+for row in rows:
+    print(row)

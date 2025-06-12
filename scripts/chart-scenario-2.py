@@ -37,15 +37,32 @@ print("Generating charts...")
 
 def get_data_for_syscall(syscall, results):
     return {
-        "Test kontrolny": results['control-syscalls-counter'][f"__x64_sys_{syscall}"],
-        "LKM": results['lkm-syscalls-counter'][f"__x64_sys_{syscall}"],
-        "eBPF bez JIT": results['ebpf-nojit-syscalls-counter'][f"__x64_sys_{syscall}"],
-        "eBPF": results['ebpf-syscalls-counter'][f"__x64_sys_{syscall}"],
+        "Test kontrolny": results['control-syscalls-counter'][f"__x64_sys_{syscall}"]["latencies"],
+        "LKM": results['lkm-syscalls-counter'][f"__x64_sys_{syscall}"]["latencies"],
+        "eBPF": results['ebpf-syscalls-counter'][f"__x64_sys_{syscall}"]["latencies"],
+        "eBPF bez JIT": results['ebpf-nojit-syscalls-counter'][f"__x64_sys_{syscall}"]["latencies"],
     }
+
+def generate_latex_table(chart_data):
+    rows = []
+    rows.append("Test & Ilość opóźnień & Mediana & Średnia & Min & Max \\\\")
+    for key, data in chart_data.items():
+        amt = len(data)
+        mean = np.mean(data)
+        median = np.median(data)
+        std = np.std(data)
+        min = np.min(data)
+        max = np.max(data)
+
+        to_mus = lambda x: x*1000000
+        rows.append(f"{key} & {amt} & {to_mus(median):.2f} & {to_mus(mean):.2f} & {to_mus(min):.2f} & {to_mus(max):.2f} \\\\")
+
+    for row in rows:
+        print(row)
 
 execve_data = get_data_for_syscall("execve", results)
 generate_comparison_hist_chart(
-    (0, 0.000175),
+    (0, 0.000225),
     (0, 800),
     execve_data,
     f"{latency_charts_dir}execve-chart.png"
@@ -75,3 +92,12 @@ generate_comparison_hist_chart(
     f"{latency_charts_dir}write-chart.png",
     y_in_thousands = True
 )
+
+print(f"LaTeX table for execve")
+generate_latex_table(execve_data)
+print(f"LaTeX table for openat")
+generate_latex_table(openat_data)
+print(f"LaTeX table for read")
+generate_latex_table(read_data)
+print(f"LaTeX table for write")
+generate_latex_table(write_data)

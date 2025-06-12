@@ -41,7 +41,7 @@ def parse_perf_output(perf_output):
         table.append((cpu, time, event))
     return table
 
-def calc_latencies_for_probe_pair(data, probe, return_probe):
+def calc_latencies(data, probe, return_probe):
     cpus = {}
     for event in data:
         cpu, time, event = event
@@ -50,8 +50,12 @@ def calc_latencies_for_probe_pair(data, probe, return_probe):
         cpus[cpu].append((event, time))
 
     latencies = []
+    scanned_opens = 0
+    scanned_closes = 0
     scanned_events = 0
     discarded_events = 0
+    min_open = float('inf')
+    max_open = 0
 
     for events in cpus.values():
         event_open = False
@@ -60,8 +64,14 @@ def calc_latencies_for_probe_pair(data, probe, return_probe):
         for event in events:
             if event[0] == probe:
                 opening_event = True
+                scanned_opens += 1
+                if event[1] < min_open:
+                    min_open = event[1]
+                if event[1] > max_open:
+                    max_open = event[1]
             elif event[0] == return_probe:
                 opening_event = False
+                scanned_closes += 1
             else:
                 #print("Unrecognized event!")
                 discarded_events += 1
@@ -80,27 +90,19 @@ def calc_latencies_for_probe_pair(data, probe, return_probe):
                 latencies.append(event[1] - open_time)
 
             scanned_events += 1
-    return (latencies, scanned_events, discarded_events)
+    stats = {
+            "latencies": latencies,
+            "scanned_opens": scanned_opens,
+            "scanned_closes": scanned_closes,
+            "scanned_events": scanned_events,
+            "discarded_events": discarded_events,
+            "min_open_time": min_open,
+            "max_open_time": max_open
+    }
+    return stats
 
 
-def get_latencies(file, tracked_function):
-    probe = f"probe:{tracked_function}"
-    return_probe = f"probe:{tracked_function}__return"
-
-    command = f'perf script -i "{file}" --ns -F cpu,time,event | grep -e "{probe}" -e "{return_probe}"'
-    print(f"Running {command}")
-    stdout, stderr = bash(command)
-
-    print("Calculating latencies...")
-    all_events = parse_perf_output(stdout)
-
-    latencies, scanned_events, discarded_events = calc_latencies_for_probe_pair(all_events, probe, return_probe)
-    print(f"Scanned events: {scanned_events}")
-    print(f"Discarded events: {discarded_events}")
-    return {tracked_function: latencies}
-
-
-def get_latencies_multiple(file, tracked_functions):
+def get_latencies(file, tracked_functions):
     command = f'perf script -i "{file}" --ns -F cpu,time,event'
     print(f"Running {command}")
     stdout, stderr = bash(command)
@@ -124,13 +126,30 @@ def get_latencies_multiple(file, tracked_functions):
         probe = f"probe:{function}"
         return_probe = f"probe:{function}__return"
 
-        latencies, scanned_events, discarded_events = calc_latencies_for_probe_pair(data, probe, return_probe)
-        print(f"Function {function}:")
-        print(f"Scanned events: {scanned_events}")
-        print(f"Discarded events: {discarded_events}")
-        by_function[function] = latencies
+        by_function[function] = calc_latencies(data, probe, return_probe)
+
     return by_function
 
+def calc_stats(latencies_data):
+    latencies = latencies_data["latencies"]
+    mean = np.mean(latencies)
+    median = np.median(latencies)
+    std = np.std(latencies)
+    min = np.min(latencies)
+    max = np.max(latencies)
+    print(latencies_data["scanned_opens"])
+    print(latencies_data["max_open_time"])
+    print(latencies_data["min_open_time"])
+    events_per_second = latencies_data["scanned_opens"] / (latencies_data["max_open_time"] - latencies_data["min_open_time"])
+
+    return {
+            "mean": mean,
+            "median": median,
+            "std": std,
+            "min": min,
+            "max": max,
+            "events_per_second": events_per_second
+    }
 
 if __name__ == '__main__':
     parser = ArgumentParser()
@@ -139,7 +158,7 @@ if __name__ == '__main__':
     parser.add_argument("-p", "--probes", nargs='+', dest="probes", help="Probes to calc latency for")
     args = parser.parse_args()
 
-    output = get_latencies_multiple(args.input, args.probes)
+    output = get_latencies(args.input, args.probes)
 
     print(f"Saving output to {args.output}...")
     with open(args.output, 'w') as f:

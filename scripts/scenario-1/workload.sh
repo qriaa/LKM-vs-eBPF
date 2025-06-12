@@ -27,7 +27,7 @@ for RUNNING_TEST in "${TESTS[@]}"; do
     for SRC_ADDR in "${ADDRESSES[@]}"; do
         echo "Running test from $SRC_ADDR"
         ip addr add "$SRC_ADDR/24" dev "$NET_IF"
-        iperf3 -u -4 -A 15 -b 1G -k 500000 -B "$SRC_ADDR" -c "$REMOTE_ADDR"
+        iperf3 -u -4 -A 15 -b 1G -t 30 -B "$SRC_ADDR" -c "$REMOTE_ADDR"
         ip addr del "$SRC_ADDR/24" dev "$NET_IF"
         sleep 1 # We need to wait for the server to run another iperf3 before continuing
     done

@@ -24,8 +24,7 @@ for FUNCTION_NAME in "${FUNCTIONS[@]}"; do
 done;
 
 # -m increases buffer amount, prevents losing chunks
-# -e "cycles/call-graph=dwarf/" \
-perf record -a -m 16M -o $PERF_RESULTS_PATH \
+perf record -a -m 32M -o $PERF_RESULTS_PATH \
     -e "cycles/call-graph=dwarf/" \
     -e "cpu-clock/call-graph=dwarf/" \
     -e "probe:__x64_sys_execve/call-graph=no/" \
