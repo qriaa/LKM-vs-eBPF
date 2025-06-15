@@ -8,17 +8,10 @@ PROJ_ROOT=$SCRIPT_DIR/../..
 ensure_sudo
 
 SCENARIO_NAME='scenario-1'
-TESTS=(
-    'control-firewall'
-    'lkm-firewall'
-    'ebpf-nf-nojit-firewall'
-    'ebpf-nf-firewall'
-    'ebpf-xdp-nojit-firewall'
-    'ebpf-xdp-firewall'
-)
 
 PROBED_FUNCTION='net_rx_action'
 PERF_RESULTS_PATH="$PROJ_ROOT/results/scenario-1/perf-data"
+mkdir -p $PERF_RESULTS_PATH
 IPERF_CONN_NUM=2
 
 workload() {
@@ -103,3 +96,5 @@ wait $EBPF_LOADER_PID
 
 sudo perf probe --del "$PROBED_FUNCTION"
 sudo perf probe --del "${PROBED_FUNCTION}__return"
+
+sudo chmod 777 -R $PERF_RESULTS_PATH

@@ -19,8 +19,7 @@ tests = [
 tracked_functions = [ 
     "__x64_sys_execve",
     "__x64_sys_openat",
-    "__x64_sys_read",
-    "__x64_sys_write"
+    "__x64_sys_read"
 ]
 
 results = {}
@@ -84,20 +83,9 @@ generate_comparison_hist_chart(
     f"{latency_charts_dir}read-chart.png"
 )
 
-write_data = get_data_for_syscall("write", results)
-generate_comparison_hist_chart(
-    (0, 0.000004),
-    (0, 3000000),
-    write_data,
-    f"{latency_charts_dir}write-chart.png",
-    y_in_thousands = True
-)
-
 print(f"LaTeX table for execve")
 generate_latex_table(execve_data)
 print(f"LaTeX table for openat")
 generate_latex_table(openat_data)
 print(f"LaTeX table for read")
 generate_latex_table(read_data)
-print(f"LaTeX table for write")
-generate_latex_table(write_data)
